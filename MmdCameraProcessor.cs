@@ -47,9 +47,19 @@ internal sealed class MmdCameraProcessor : IVideoEffectProcessor
         float vmdFrame = start + frame * (vmdFps / fps);
         var pose = motion.Sample(vmdFrame);
 
+        float targetX = pose.Target.X;
+        float rotY = pose.Rotation.Y;
+        float rotZ = pose.Rotation.Z;
+        if (item.FlipHorizontal)
+        {
+            targetX = -targetX;
+            rotY = -rotY;
+            rotZ = -rotZ;
+        }
+
         // MMD → YMM4: 位置はスケール、Z は標準カメラと同様に符号反転
         var target = new Vector3(
-            pose.Target.X * scale + ox,
+            targetX * scale + ox,
             pose.Target.Y * scale + oy,
             -(pose.Target.Z * scale + oz));
 
@@ -57,7 +67,7 @@ internal sealed class MmdCameraProcessor : IVideoEffectProcessor
         // 列ベクトル式 Ry*Rx に対応する行ベクトル順 = Rx*Ry
         var rot =
             Matrix4x4.CreateRotationX(pose.Rotation.X) *
-            Matrix4x4.CreateRotationY(pose.Rotation.Y);
+            Matrix4x4.CreateRotationY(rotY);
 
         var offset = Vector3.Transform(new Vector3(0f, 0f, pose.Distance * scale), rot);
         // offset.Z も YMM4 内部座標へ（距離オフセットの Z 成分を反転）
@@ -76,9 +86,9 @@ internal sealed class MmdCameraProcessor : IVideoEffectProcessor
             Matrix4x4.CreateTranslation(0f, 0f, 1000f);
 
         // ロールは標準注視点カメラと同じく CreateLookAt 後の Z 回転で付与
-        if (MathF.Abs(pose.Rotation.Z) > 1e-6f)
+        if (MathF.Abs(rotZ) > 1e-6f)
         {
-            camera *= Matrix4x4.CreateRotationZ(pose.Rotation.Z, new Vector3(0f, 0f, 1000f));
+            camera *= Matrix4x4.CreateRotationZ(rotZ, new Vector3(0f, 0f, 1000f));
         }
 
         if (!IsFinite(camera))

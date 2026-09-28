@@ -58,6 +58,11 @@ public class MmdCameraEffect : VideoEffectBase
     [AnimationSlider("F1", "px", -2000, 2000)]
     public Animation OffsetZ { get; } = new Animation(0, YMM4Constants.VerySmallValue, YMM4Constants.VeryLargeValue);
 
+    [Display(GroupName = "変換", Name = "左右反転", Description = "カメラモーションを左右反転する（注視点X・ヨー・ロールを反転）")]
+    [ToggleSlider]
+    public bool FlipHorizontal { get => flipHorizontal; set => Set(ref flipHorizontal, value); }
+    bool flipHorizontal;
+
     [Display(GroupName = "カメラ", Name = "FOVを適用", Description = "VMDの画角をYMM4のパース（PerspectiveDistance）へ反映する")]
     [ToggleSlider]
     public bool ApplyFov { get => applyFov; set => Set(ref applyFov, value); }
