@@ -32,19 +32,21 @@ internal sealed class MmdCameraProcessor : IVideoEffectProcessor
         if (motion is null || motion.IsEmpty)
             return drawDesc;
 
-        int frame = effectDescription.ItemPosition.Frame;
-        int length = effectDescription.ItemDuration.Frame;
-        int fps = Math.Max(1, effectDescription.FPS);
+        // パラメータのキーフレーム評価はアイテム基準、VMD再生位置はタイムライン絶対フレーム基準
+        int itemFrame = effectDescription.ItemPosition.Frame;
+        int itemLength = effectDescription.ItemDuration.Frame;
+        int timelineFps = Math.Max(1, effectDescription.FPS);
+        int timelineFrame = effectDescription.TimelinePosition.Frame;
 
-        float start = (float)item.StartFrame.GetValue(frame, length, fps);
-        float vmdFps = Math.Max(1f, (float)item.VmdFps.GetValue(frame, length, fps));
-        float scale = Math.Max(1e-6f, (float)item.Scale.GetValue(frame, length, fps));
-        float ox = (float)item.OffsetX.GetValue(frame, length, fps);
-        float oy = (float)item.OffsetY.GetValue(frame, length, fps);
-        float oz = (float)item.OffsetZ.GetValue(frame, length, fps);
+        float frameOffset = (float)item.FrameOffset.GetValue(itemFrame, itemLength, timelineFps);
+        float vmdFps = Math.Max(1f, (float)item.VmdFps.GetValue(itemFrame, itemLength, timelineFps));
+        float scale = Math.Max(1e-6f, (float)item.Scale.GetValue(itemFrame, itemLength, timelineFps));
+        float ox = (float)item.OffsetX.GetValue(itemFrame, itemLength, timelineFps);
+        float oy = (float)item.OffsetY.GetValue(itemFrame, itemLength, timelineFps);
+        float oz = (float)item.OffsetZ.GetValue(itemFrame, itemLength, timelineFps);
 
-        // アイテム先頭からの経過を VMD フレームへ写像
-        float vmdFrame = start + frame * (vmdFps / fps);
+        // タイムライン時刻を揃えつつ VMD フレームへ写像（例: TL 60fps・VMD 30fps なら TL60f = VMD30f）
+        float vmdFrame = timelineFrame * (vmdFps / timelineFps) + frameOffset;
         var pose = motion.Sample(vmdFrame);
 
         float targetX = pose.Target.X;

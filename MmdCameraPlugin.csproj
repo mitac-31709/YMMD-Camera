@@ -15,7 +15,6 @@
 
   <PropertyGroup>
     <YMM4_PATH Condition="'$(YMM4_PATH)' == ''">D:\V-Live\YukkuriMovieMaker_v4</YMM4_PATH>
-    <YmmPluginOutDir>$(YMM4_PATH)\user\plugin\MmdCameraPlugin</YmmPluginOutDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -60,13 +59,6 @@
       <ExcludeAssets>runtime</ExcludeAssets>
     </Reference>
   </ItemGroup>
-
-  <Target Name="CopyToYmmPlugin" AfterTargets="Build" Condition="Exists('$(YMM4_PATH)')">
-    <MakeDir Directories="$(YmmPluginOutDir)" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(YmmPluginOutDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(YmmPluginOutDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
-    <Message Importance="high" Text="Copied plugin to $(YmmPluginOutDir)" />
-  </Target>
 
   <Target Name="PackYmme" AfterTargets="Build" Condition="'$(PackYmme)' == 'true'">
     <PropertyGroup>

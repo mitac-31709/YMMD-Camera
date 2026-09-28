@@ -34,11 +34,11 @@ public class MmdCameraEffect : VideoEffectBase
     }
     string vmdPath = string.Empty;
 
-    [Display(GroupName = "タイミング", Name = "開始フレーム", Description = "アイテム先頭をVMDの何フレーム目として扱うか")]
+    [Display(GroupName = "タイミング", Name = "オフセット", Description = "タイムライン時刻から換算したVMDフレームに加算するオフセット（VMDフレーム単位）")]
     [AnimationSlider("F0", "f", -10000, 10000)]
-    public Animation StartFrame { get; } = new Animation(0, -1000000, 1000000);
+    public Animation FrameOffset { get; } = new Animation(0, -1000000, 1000000);
 
-    [Display(GroupName = "タイミング", Name = "VMD FPS", Description = "VMD作成時のフレームレート（通常30）")]
+    [Display(GroupName = "タイミング", Name = "VMD FPS", Description = "VMD作成時のフレームレート（通常30）。タイムラインFPSと違う場合は時間が揃うよう換算する")]
     [AnimationSlider("F0", "fps", 1, 120)]
     public Animation VmdFps { get; } = new Animation(30, 1, 240);
 
@@ -61,7 +61,7 @@ public class MmdCameraEffect : VideoEffectBase
     [Display(GroupName = "変換", Name = "左右反転", Description = "カメラモーションを左右反転する（注視点X・ヨー・ロールを反転）")]
     [ToggleSlider]
     public bool FlipHorizontal { get => flipHorizontal; set => Set(ref flipHorizontal, value); }
-    bool flipHorizontal;
+    bool flipHorizontal = true;
 
     [Display(GroupName = "カメラ", Name = "FOVを適用", Description = "VMDの画角をYMM4のパース（PerspectiveDistance）へ反映する")]
     [ToggleSlider]
@@ -125,5 +125,5 @@ public class MmdCameraEffect : VideoEffectBase
         new MmdCameraProcessor(this);
 
     protected override IEnumerable<IAnimatable> GetAnimatables() =>
-        [StartFrame, VmdFps, Scale, OffsetX, OffsetY, OffsetZ];
+        [FrameOffset, VmdFps, Scale, OffsetX, OffsetY, OffsetZ];
 }
