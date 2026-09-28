@@ -1,0 +1,82 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Version>1.0.0</Version>
+    <AssemblyName>MmdCameraPlugin</AssemblyName>
+    <RootNamespace>MmdCameraPlugin</RootNamespace>
+    <Product>YMM4 MMD Camera</Product>
+    <Description>MMDのカメラモーション(VMD)をYMM4のカメラ位置として再生する映像エフェクト</Description>
+    <Authors></Authors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <YMM4_PATH Condition="'$(YMM4_PATH)' == ''">D:\V-Live\YukkuriMovieMaker_v4</YMM4_PATH>
+    <YmmPluginOutDir>$(YMM4_PATH)\user\plugin\MmdCameraPlugin</YmmPluginOutDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="YukkuriMovieMaker.Plugin">
+      <HintPath>$(YMM4_PATH)\YukkuriMovieMaker.Plugin.dll</HintPath>
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </Reference>
+    <Reference Include="YukkuriMovieMaker.Controls">
+      <HintPath>$(YMM4_PATH)\YukkuriMovieMaker.Controls.dll</HintPath>
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </Reference>
+    <Reference Include="YukkuriMovieMaker.Settings">
+      <HintPath>$(YMM4_PATH)\YukkuriMovieMaker.Settings.dll</HintPath>
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </Reference>
+    <Reference Include="Vortice.Direct2D1">
+      <HintPath>$(YMM4_PATH)\Vortice.Direct2D1.dll</HintPath>
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </Reference>
+    <Reference Include="Vortice.Mathematics">
+      <HintPath>$(YMM4_PATH)\Vortice.Mathematics.dll</HintPath>
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </Reference>
+    <Reference Include="Vortice.DirectX">
+      <HintPath>$(YMM4_PATH)\Vortice.DirectX.dll</HintPath>
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </Reference>
+    <Reference Include="SharpGen.Runtime">
+      <HintPath>$(YMM4_PATH)\SharpGen.Runtime.dll</HintPath>
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </Reference>
+    <Reference Include="SharpGen.Runtime.COM">
+      <HintPath>$(YMM4_PATH)\SharpGen.Runtime.COM.dll</HintPath>
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="CopyToYmmPlugin" AfterTargets="Build" Condition="Exists('$(YMM4_PATH)')">
+    <MakeDir Directories="$(YmmPluginOutDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(YmmPluginOutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(YmmPluginOutDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+    <Message Importance="high" Text="Copied plugin to $(YmmPluginOutDir)" />
+  </Target>
+
+  <Target Name="PackYmme" AfterTargets="Build" Condition="'$(PackYmme)' == 'true'">
+    <PropertyGroup>
+      <YmmeStageRoot>$(OutputPath)ymme</YmmeStageRoot>
+      <YmmeStageDir>$(YmmeStageRoot)\$(AssemblyName)</YmmeStageDir>
+      <YmmeOut>$(MSBuildProjectDirectory)\publish\$(AssemblyName).v.$(Version).ymme</YmmeOut>
+    </PropertyGroup>
+    <MakeDir Directories="$(YmmeStageDir);$(MSBuildProjectDirectory)\publish" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(YmmeStageDir)" />
+    <ZipDirectory SourceDirectory="$(YmmeStageRoot)" DestinationFile="$(YmmeOut)" Overwrite="true" />
+    <Message Importance="high" Text="Packed $(YmmeOut)" />
+  </Target>
+</Project>
