@@ -66,3 +66,7 @@ dotnet build -c Release -p:YMM4_PATH="C:\Path\To\YukkuriMovieMaker_v4" -p:PackYm
 - AviUtl 向け出力には非対応です
 - カメラキーのない VMD では効果が適用されません
 - スケールはモデルの見た目サイズに合わせて調整してください
+
+## ライセンス
+
+[MIT License](LICENSE)
