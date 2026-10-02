@@ -8,7 +8,7 @@
     <Version>1.0.0</Version>
     <AssemblyName>MmdCameraPlugin</AssemblyName>
     <RootNamespace>MmdCameraPlugin</RootNamespace>
-    <Product>YMM4 MMD Camera</Product>
+    <Product>YMMD-Camera</Product>
     <Description>MMDのカメラモーション(VMD)をYMM4のカメラ位置として再生する映像エフェクト</Description>
     <Authors></Authors>
   </PropertyGroup>
