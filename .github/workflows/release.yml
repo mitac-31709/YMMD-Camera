@@ -28,7 +28,26 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Check YMM4_PATH availability
+        id: ymm4_prereq
+        shell: pwsh
+        run: |
+          $isTagRelease = '${{ startsWith(github.ref, ''refs/tags/v'') }}' -eq 'true'
+
+          if ([string]::IsNullOrWhiteSpace($env:YMM4_PATH)) {
+            if ($isTagRelease) {
+              Write-Error "YMM4_PATH is not set. Configure repository secret 'YMM4_PATH' to the YukkuriMovieMaker v4 install directory."
+            }
+
+            Write-Warning "YMM4_PATH is not set. Skipping non-release build steps."
+            "skip_build=true" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          "skip_build=false" >> $env:GITHUB_OUTPUT
+
       - name: Validate YMM4_PATH
+        if: steps.ymm4_prereq.outputs.skip_build != 'true'
         shell: pwsh
         run: |
           if ([string]::IsNullOrWhiteSpace($env:YMM4_PATH)) {
@@ -62,11 +81,13 @@ jobs:
           }
 
       - name: Build (Release + PackYmme)
+        if: steps.ymm4_prereq.outputs.skip_build != 'true'
         shell: pwsh
         run: |
           dotnet build "$env:GITHUB_WORKSPACE/MmdCameraPlugin.csproj" -c Release -p:PackYmme=true -p:YMM4_PATH="$env:YMM4_PATH"
 
       - name: Verify build outputs
+        if: steps.ymm4_prereq.outputs.skip_build != 'true'
         shell: pwsh
         run: |
           $ymmeFiles = Get-ChildItem -Path "$env:GITHUB_WORKSPACE/publish" -Filter *.ymme -File -ErrorAction SilentlyContinue
@@ -80,6 +101,7 @@ jobs:
           }
 
       - name: Upload build artifacts
+        if: steps.ymm4_prereq.outputs.skip_build != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: MmdCameraPlugin-release-${{ github.run_number }}
