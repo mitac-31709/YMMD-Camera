@@ -1,0 +1,127 @@
+name: Release Build
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      DOTNET_NOLOGO: true
+      YMM4_PATH: ${{ secrets.YMM4_PATH }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Validate YMM4_PATH
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:YMM4_PATH)) {
+            Write-Error "YMM4_PATH is not set. Configure repository secret 'YMM4_PATH' to the YukkuriMovieMaker v4 install directory."
+          }
+
+          $requiredDlls = @(
+            'YukkuriMovieMaker.Plugin.dll',
+            'YukkuriMovieMaker.Controls.dll',
+            'YukkuriMovieMaker.Settings.dll',
+            'Vortice.Direct2D1.dll',
+            'Vortice.Mathematics.dll',
+            'Vortice.DirectX.dll',
+            'SharpGen.Runtime.dll',
+            'SharpGen.Runtime.COM.dll'
+          )
+
+          if (-not (Test-Path -LiteralPath $env:YMM4_PATH -PathType Container)) {
+            Write-Error "YMM4_PATH '$env:YMM4_PATH' does not exist or is not a directory."
+          }
+
+          $missing = foreach ($dll in $requiredDlls) {
+            $dllPath = Join-Path -Path $env:YMM4_PATH -ChildPath $dll
+            if (-not (Test-Path -LiteralPath $dllPath -PathType Leaf)) {
+              $dllPath
+            }
+          }
+
+          if ($missing) {
+            Write-Error "Required YMM4 DLLs are missing:`n$($missing -join "`n")"
+          }
+
+      - name: Build (Release + PackYmme)
+        shell: pwsh
+        run: |
+          dotnet build "$env:GITHUB_WORKSPACE/MmdCameraPlugin.csproj" -c Release -p:PackYmme=true -p:YMM4_PATH="$env:YMM4_PATH"
+
+      - name: Verify build outputs
+        shell: pwsh
+        run: |
+          $ymmeFiles = Get-ChildItem -Path "$env:GITHUB_WORKSPACE/publish" -Filter *.ymme -File -ErrorAction SilentlyContinue
+          if (-not $ymmeFiles) {
+            Write-Error "No .ymme file found in publish/."
+          }
+
+          $releaseDll = "$env:GITHUB_WORKSPACE/bin/Release/net10.0-windows10.0.19041.0/MmdCameraPlugin.dll"
+          if (-not (Test-Path -LiteralPath $releaseDll -PathType Leaf)) {
+            Write-Error "Release DLL not found: $releaseDll"
+          }
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: MmdCameraPlugin-release-${{ github.run_number }}
+          if-no-files-found: error
+          path: |
+            publish/*.ymme
+            bin/Release/net10.0-windows10.0.19041.0/MmdCameraPlugin.dll
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.3
+        with:
+          name: MmdCameraPlugin-release-${{ github.run_number }}
+          path: release-assets
+
+      - name: Verify release assets
+        shell: pwsh
+        run: |
+          $ymmeFiles = Get-ChildItem -Path "$env:GITHUB_WORKSPACE/release-assets" -Filter *.ymme -File -Recurse -ErrorAction SilentlyContinue
+          if (-not $ymmeFiles) {
+            Write-Error "No .ymme asset found for release."
+          }
+
+          $releaseDll = "$env:GITHUB_WORKSPACE/release-assets/MmdCameraPlugin.dll"
+          if (-not (Test-Path -LiteralPath $releaseDll -PathType Leaf)) {
+            Write-Error "Release DLL asset not found: $releaseDll"
+          }
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/*.ymme
+            release-assets/MmdCameraPlugin.dll
+          generate_release_notes: true

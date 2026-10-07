@@ -61,6 +61,12 @@ dotnet build -c Release -p:YMM4_PATH="C:\Path\To\YukkuriMovieMaker_v4" -p:PackYm
 
 成功すると `publish\MmdCameraPlugin.v.1.0.0.ymme` が生成されます。
 
+## GitHub Actions（Release）
+
+- ワークフロー（`.github/workflows/release.yml`）は `master` への push / Pull Request / `v*` タグ push で実行されます。
+- GitHub Actions でビルドするには、リポジトリ Secrets に `YMM4_PATH` を設定してください（YMM4 本体と必要 DLL が存在する実パス）。
+- `v1.0.0` のようなタグを push すると、`publish/*.ymme` と `MmdCameraPlugin.dll` が GitHub Release に添付されます。
+
 ## 注意
 
 - AviUtl 向け出力には非対応です
